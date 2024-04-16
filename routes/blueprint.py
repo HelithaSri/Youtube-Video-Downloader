@@ -1,7 +1,7 @@
 from flask import Blueprint
 
-from controller.downloadController import fetchSingleDetails
+from controller.downloadController import fetchDetails
 
 blueprint = Blueprint('blueprint', __name__)
 
-blueprint.route('/fetch/single', methods=['GET'])(fetchSingleDetails)
+blueprint.route('/fetch-info', methods=['POST'])(fetchDetails)

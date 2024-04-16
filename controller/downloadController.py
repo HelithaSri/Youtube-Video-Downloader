@@ -1,6 +1,10 @@
-from service.DownloadService import hell
+from flask import request
+
+from service.DownloadService import fetchInfo
 
 
-def fetchSingleDetails():
-    # return hell("https://www.youtube.com/watch?v=kRZIPj4s-r8")
-    return hell("https://youtube.com/playlist?list=PL7FhYA3g8-ya4p9BndyfiPSKojCIefMJp&feature=shared")
+def fetchDetails():
+    if request.is_json:
+        # Retrieve the JSON data from the request
+        json_data = request.get_json()
+    return fetchInfo(json_data['url'])

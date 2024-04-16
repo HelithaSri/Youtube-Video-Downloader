@@ -6,9 +6,15 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def hell(url):
+def fetchInfo(url):
+
+    if "youtu.be" in url:
+        url = url.replace("https://youtu.be/", "https://www.youtube.com/watch?v=")
+
+    video_info = []
     parsed_url = urlparse(url)
-    if parsed_url.netloc != 'youtube.com':
+    allowed_netlocs = ['youtube.com', 'www.youtube.com', 'youtu.be']
+    if parsed_url.netloc not in allowed_netlocs:
         return None  # Not a YouTube URL
 
     video_id_match = re.search(r'(v/|embed/|watch\?v=)([^&]+)', url)
@@ -36,8 +42,10 @@ def hell(url):
 
             thumbnail_url = thumbnail_meta['href']
             title = title_meta['content']
-            return json.dumps(
-                [{'video_id': video_id, 'thumbnailUrl': thumbnail_url, 'sourceLink': url, 'title': title}])
+
+            video_info.append({'video_id': video_id, 'title': title, 'thumbnail_url': thumbnail_url,
+                               'source_url': url})
+            return video_info
         except Exception as e:
             print(f"Error parsing HTML for video: {e}")
             return None
@@ -64,20 +72,13 @@ def hell(url):
         json_str = re.search(r'({.*})', data_str).group(1)
         data = json.loads(json_str)
 
-        print(data)
-
         videos = data['contents']['twoColumnBrowseResultsRenderer']['tabs'][0]['tabRenderer']['content'][
             'sectionListRenderer']['contents'][0]['itemSectionRenderer']['contents'][0]['playlistVideoListRenderer'][
             'contents']
 
-        video_info = []
-
         # Extract video information
         for video in videos:
             video_renderer = video.get('playlistVideoRenderer')
-            print("\n")
-            print(video_renderer)
-            print("\n")
             if video_renderer:
                 video_id = video_renderer['videoId']
                 video_title = video_renderer['title']['runs'][0]['text']
@@ -85,7 +86,6 @@ def hell(url):
                 source_url = f'https://www.youtube.com/watch?v={video_id}'
                 video_info.append({'video_id': video_id, 'title': video_title, 'thumbnail_url': thumbnail_url,
                                    'source_url': source_url})
-
         return video_info
 
     else:
