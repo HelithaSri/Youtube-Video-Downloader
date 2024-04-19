@@ -10,7 +10,7 @@ app.register_blueprint(blueprint, url_prefix='/yt')
 scheduler = APScheduler()
 
 
-@scheduler.task('interval', id='my_job', hour='*/6', minute='0')
+@scheduler.task('interval', id='my_job', seconds=21600)
 def delete_files():
     print("\n 🕒 Scheduled job started! 🕒 \n")
     scheduled_task()
