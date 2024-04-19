@@ -1,13 +1,15 @@
+import datetime
 import json
+import os
 import re
 from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from pytube import YouTube
 
 
 def fetchInfo(url):
-
     if "youtu.be" in url:
         url = url.replace("https://youtu.be/", "https://www.youtube.com/watch?v=")
 
@@ -91,3 +93,68 @@ def fetchInfo(url):
     else:
         # Not a valid video or playlist URL
         return None
+
+
+def downloadVideos(videos, is_video):
+    print(videos)
+
+    parent_directory = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+
+    download_dir = os.path.join(parent_directory, "downloads")
+    if not os.path.exists(download_dir):
+        os.makedirs(download_dir)
+        print("Create downloads folder in " + download_dir)
+    if not os.path.exists(download_dir + "/video"):
+        os.makedirs(download_dir + "/video")
+        print("Create video folder in " + download_dir + "/video")
+    if not os.path.exists(download_dir + "/audio"):
+        os.makedirs(download_dir + "/audio")
+        print("Create audio folder in " + download_dir + "/audio")
+
+    audio_dir = download_dir + "/audio/"
+    video_dir = download_dir + "/video/"
+
+    for idx, video_id in enumerate(videos):
+        idx = idx + 1
+        try:
+            print(f"Downloading... {idx} - {video_id}...")
+            yt = YouTube(f"https://www.youtube.com/watch?v={video_id}")
+
+            if is_video:
+                file_name = remove_forbidden_characters(yt.title) + ".mp4"
+                stream = yt.streams.first()
+                stream.download(filename=video_dir + file_name)
+                file_path = os.path.join(video_dir, file_name)
+                print(f"Video {idx} downloaded successfully!")
+
+            else:
+                file_name = remove_forbidden_characters(yt.title) + ".mp3"
+                stream = yt.streams.filter(only_audio=True).first()
+                stream.download(filename=audio_dir + file_name)
+                print(f"Audio {idx} downloaded successfully!")
+                file_path = os.path.join(audio_dir, file_name)
+        except Exception as e:
+            print(f"Error downloading video {idx}: {str(e)}")
+    print("Path to the downloaded file:", file_path)
+    print("Downloaded successfully!")
+    return file_path
+
+
+def remove_forbidden_characters(title):
+    forbidden_pattern = r'[\\/:\*\?"<>|()]'
+    clean_title = re.sub(forbidden_pattern, '', title)
+    return clean_title
+
+
+def delete_old_files(directory):
+    now = datetime.datetime.now()
+    one_hour_ago = now - datetime.timedelta(hours=1)
+
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            file_path = os.path.join(root, file)
+            creation_time = datetime.datetime.fromtimestamp(os.path.getctime(file_path))
+
+            if creation_time < one_hour_ago:
+                os.remove(file_path)
+                print(f"🗑 Deleted {file_path}")
